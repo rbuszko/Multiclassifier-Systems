@@ -12,5 +12,6 @@ class PoolClassifiers:
             number_samples_training=number_samples_training,
             number_samples_validation=100,
             samples_training=samples_training,
-            samples_validation=samples_validation) for i in range(classifier_number)]
+            samples_validation=samples_validation,
+            seed=i) for i in range(classifier_number)]
         # Will do combination rules in there
