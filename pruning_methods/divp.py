@@ -143,17 +143,15 @@ def genetic_algorithm(M1, M2, M3, M4, M5, data_validation, classifiers_pool):
         return 1 - best_result
 
     # Definition of weight and treshold bounds
-    varbound=np.array([[0, 10],[0, 10],[0, 10],[0, 10],[0, 10],[0, 10]])
-    vartype=np.array([['real'],['real'],['real'],['real'],['real'],['real']])
+    varbound=np.array([[0, 5],[0, 5],[0, 5],[0, 5],[0, 5],[0, 2]])
+    vartype=np.array([['int'],['int'],['int'],['int'],['int'],['real']])
 
-    model = ga(function=fitness_function, dimension=6, variable_type_mixed=vartype, variable_boundaries=varbound, algorithm_parameters=algorithm_param)
+    model = ga(function=fitness_function, dimension=6, variable_type_mixed=vartype, variable_boundaries=varbound, algorithm_parameters=algorithm_param, function_timeout=100000)
     model.run()
 
-    # convergence = model.report
     solution = model.output_dict
     best_pruned_pool, best_result = best_pool(solution['variable'][0], solution['variable'][1], solution['variable'][2], solution['variable'][3], solution['variable'][4], solution['variable'][5])
     
-    print(f'Result the same i hope {best_result}')
     return best_pruned_pool
 
 
@@ -237,6 +235,5 @@ def divp(classifiers_pool, data_validation, data_test):
     # I optimize by accuracy as in document, if want to change this change line 133
     new_pool = genetic_algorithm(M1, M2, M3, M4, M5, samples_validation2, classifiers_pool)
 
-    # To compare, probably will change in future
-    print(majority_voting(classifiers_pool, data_test, 'accuracy'))
-    print(majority_voting(new_pool, data_test, 'accuracy'))
+    print(f'New pool size: {len(new_pool)}')
+    return majority_voting(new_pool, data_test, 'probes')
