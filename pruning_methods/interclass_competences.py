@@ -42,7 +42,7 @@ def create_weights_final_ensemble_index(object, label, pool, data, classes_numbe
             clusters_row_indexes[i].append(matrix_label_rows_classifier[j])
     # Delete label cluster
     clusters_row_indexes.pop(int(label - 1))
-    # From each cluster pick classifier with best accuracy, 
+    # From each cluster pick classifier with best class score, 
     for cluster in clusters_row_indexes:
         cluster.sort(key = lambda x: x[0][int(label - 1)], reverse=True)
         for i in range(k_top):
@@ -74,11 +74,10 @@ def interclass_competences(pool_classifiers, samples_validation, samples_test, k
         matrix_label_rows_classifier.sort(key = lambda x: x[1])
         # Calculate support from each classifier
         final_support = [0 for _ in range(classes_number)]
+        print(f'New pool size: {len(final_ensemble)}')
         for c_index in final_ensemble:
             support = pool_classifiers[c_index].model.predict_proba(samples_test.iloc[i, 0:-1].to_frame().T)
-            # weights = matrix_label_rows_classifier[c_index][0]
-            final_support += support #* weights
+            final_support += support
         result.append(np.argmax(final_support) + 1)
     
-    print(f"ACCURACY ALL CLASSIFIERS: {majority_voting(pool_classifiers, samples_test, 'accuracy')}")
-    print(f"ACCURACY BY SOME: {accuracy_score(samples_test.iloc[:, -1], result)}")
+    return result
