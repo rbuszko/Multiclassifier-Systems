@@ -144,8 +144,6 @@ def minimum_spanning_tree(pool_classifiers, cluster_number, data_train, data_val
 def calculate_measures(contingency_table):
     measure = np.ndarray((contingency_table.shape[0], contingency_table.shape[1]), dtype=float)
     
-    m = contingency_table[0][0].a + contingency_table[0][0].b + contingency_table[0][0].c + contingency_table[0][0].d
-
     # Q-statistic = (ad - bc) / (ad + bc)
     for i in range(contingency_table.shape[0]):
         for j in range(contingency_table.shape[1]):
@@ -234,6 +232,7 @@ def genetic_algorithm(data, candidates):
             voting_error = 1 - majority_voting(ensemble, data, 'accuracy')
 
         # Wont look after 1 element ensembles cause I will check this separately and getting weird error
+        return voting_error if len(combos) > 0 else 2
         return average_measure + voting_error if len(combos) > 0 else 2
 
     varbound=np.array([[0, 1]] * len(candidates))
@@ -264,6 +263,5 @@ def consensus_enora(pool_classifiers, clusters_number, samples_train, samples_va
     # Not sure how ENORA works so I used genetic algorithm instead
     new_pool = genetic_algorithm(samples_validation2, candidates)
 
-    print(majority_voting(pool_classifiers, samples_test, 'accuracy'))
-    print(majority_voting(candidates, samples_test, 'accuracy'))
-    print(majority_voting(new_pool, samples_test, 'accuracy'))
+    print(f'New pool size: {len(new_pool)}')
+    return majority_voting(pool_classifiers, samples_test, 'probes')
