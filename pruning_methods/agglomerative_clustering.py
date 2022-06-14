@@ -1,5 +1,7 @@
 import numpy as np
 from combination_methods.majority_voting import majority_voting
+import copy
+from sklearn.metrics import f1_score
 
 # Assumptions:
 # 1. Shouldn't be homogeneous                                                         | X
@@ -36,7 +38,6 @@ def choose_classifier(cluster_number, clusters, classifier_distance_table):
                 distances.append(classifier_cluster_distance(
                     classifier, cluster, classifier_distance_table))
         average_distances.append(np.average(distances))
-
     return clusters[cluster_number][np.argmax(average_distances)]
 
 
@@ -61,22 +62,33 @@ def cluster_distance_measure(clusters, classifier_distance_table):
     return cluster_distance_table
 
 
-def classifiers_clustering(classifiers_pool, classifier_distance_table, number_clusters):
+def classifiers_clustering(classifiers_pool, classifier_distance_table):
     # Initial clusters
     clusters = [[i] for i in range(len(classifiers_pool))]
-    
+    cluster_distances = [0 for i in range(len(classifiers_pool))]
+    max_distances = [0 for i in range(len(classifiers_pool))]
+    combinations = []
+    max_distance = []
+
     # Calculate clusters
-    while len(clusters) > number_clusters:
+    while len(clusters) > 2:
         # Calculate distances between clusters
         distance_table = cluster_distance_measure(clusters, classifier_distance_table)
         # Find coordinates of smallest distance
         x, y = np.unravel_index(distance_table.argmin(), distance_table.shape)
         # Remove cluster with higher index
         deleted_cluster = clusters.pop(np.max([x, y]))
+        deleted_cluster_distances = cluster_distances.pop(np.max([x, y]))
+        deleted_max_distances = max_distances.pop(np.max([x, y]))
         # Merge clusters
         clusters[np.min([x, y])] += deleted_cluster
-    
-    return clusters
+        max_distances[np.min([x, y])] = distance_table[x][y] - np.min([cluster_distances[np.min([x, y])], deleted_cluster_distances])
+        cluster_distances[np.min([x, y])] = distance_table[x][y]
+        combinations.append(copy.deepcopy(clusters))
+        max_distance.append(np.max(max_distances))
+
+    best_combination = combinations[np.argmax(max_distance) - 1]
+    return best_combination
 
 
 def classifier_distance_measure(classifiers_pool, data_validation):
@@ -105,14 +117,11 @@ def classifier_distance_measure(classifiers_pool, data_validation):
     return compound_error_table
 
 
-def agglomerative_clustering(classifiers_pool, data_validation, data_test, number_clusters):
-    # Necessary condition
-    assert number_clusters < len(classifiers_pool), "Number of clusters can't be higher than number of classifiers"
-
+def agglomerative_clustering(classifiers_pool, data_validation, data_test):
     # Calculate distances between classifiers
     distance_table = classifier_distance_measure(classifiers_pool, data_validation)
     # Create ensembles of classifiers
-    clusters = classifiers_clustering(classifiers_pool, distance_table, number_clusters)
+    clusters = classifiers_clustering(classifiers_pool, distance_table)
     # Create candidate ensemble
     candidate_ensemble = []
     for i in range(len(clusters)):
@@ -131,5 +140,7 @@ def agglomerative_clustering(classifiers_pool, data_validation, data_test, numbe
         new_pool.append(classifiers_pool[i])
 
     # To compare, probably will change in future
-    print(majority_voting(classifiers_pool, data_test, 'accuracy'))
-    print(majority_voting(new_pool, data_test, 'accuracy'))
+    # print(majority_voting(classifiers_pool, data_test, 'accuracy'))
+    # print(majority_voting(new_pool, data_test, 'accuracy'))
+    print(f'New pool size: {len(new_pool)}')
+    return majority_voting(new_pool, data_test, 'probes')
