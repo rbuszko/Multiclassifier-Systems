@@ -1,6 +1,7 @@
 from collections import defaultdict
 from combination_methods.majority_voting import majority_voting
 import math
+import numpy as np
 
 def margins_calculate(pool_classifiers, prunning_set):
     data_margins = []
@@ -45,7 +46,8 @@ def criterions_calculate(pool_classifiers, margins, prunning_set):
     return criterions
 
 
-def ranking_classifiers(pool_classifiers, classifiers_number, criterions):
+def ranking_classifiers(pool_classifiers, criterions, data):
+    accuracies = []
     new_pool = []
     participants = []
     
@@ -57,19 +59,21 @@ def ranking_classifiers(pool_classifiers, classifiers_number, criterions):
     # Sort participants due to criterions
     participants.sort(key = lambda x: x[1], reverse=True)
     # Create new pool of classifiers
-    for index in range(classifiers_number):
+    for index in range(len(pool_classifiers)):
         new_pool.append(pool_classifiers[participants[index][0]])
+        accuracies.append(majority_voting(new_pool, data, 'accuracy'))
 
-    return new_pool
+    return [pool_classifiers[participants[index][0]] for index in range(np.argmax(accuracies) + 1)]
 
 
-def margin_ordering(pool_classifiers, classifiers_number, data_validation, data_test):
+def margin_ordering(pool_classifiers, data_validation, data_test):
     margins = margins_calculate(pool_classifiers, data_validation)
     criterions = criterions_calculate(pool_classifiers, margins, data_validation)
-    new_pool = ranking_classifiers(pool_classifiers, classifiers_number, criterions)
+    new_pool = ranking_classifiers(pool_classifiers, criterions, data_validation)
 
     # To compare, probably will change in future
-    print(majority_voting(pool_classifiers, data_test, 'balanced_accuracy'))
-    print(majority_voting(new_pool, data_test, 'balanced_accuracy'))
-    
-
+    # print(majority_voting(pool_classifiers, data_test, 'accuracy'))
+    # print(majority_voting(new_pool, data_test, 'accuracy'))
+    # return new_pool
+    print(f'New pool size: {len(new_pool)}')
+    return majority_voting(new_pool, data_test, 'probes')
